@@ -1,6 +1,13 @@
 Description
 ===========
+
 Installs and configures Jenkins CI server & node slaves.  Resource providers to support automation via jenkins-cli, including job create/update.
+
+Changelog
+=========
+
+- 0.7 - Jenkins was binding to the ip address of the primary interface instead of listening to all addresses which caused nginx to be unable to connect over localhost to Jenkins.
+- 0.8 - Convert the recipe to use only the WAR file and not the Debian package.
 
 Requirements
 ============
@@ -40,9 +47,10 @@ Where the jenkins_login recipe is simply:
   jenkins_cli "login --username #{node[:jenkins][:username]} --password #{node[:jenkins][:password]}"
 
 Attributes
-==========
+----------
 
-* jenkins[:mirror] - Base URL for downloading Jenkins (server)
+* jenkins[:version] - Specify the version of jenkins used.  By default it is latest
+* jenkins[:mirror_url] - Specify the URL to download the WAR from
 * jenkins[:java_home] - Java install path, used for for cli commands
 * jenkins[:server][:home] - JENKINS_HOME directory
 * jenkins[:server][:user] - User the Jenkins server runs as
@@ -69,7 +77,7 @@ Attributes
 * jenkins[:node][:ssh_private_key] - jenkins master defaults to: `~/.ssh/id_rsa` (created by the default recipe)
 * jenkins[:node][:jvm_options] - SSH slave JVM options
 * jenkins[:iptables_allow] - if iptables is enabled, add a rule passing 'jenkins[:server][:port]'
-* jenkins[:nginx][:http_proxy][:variant] - use `nginx` or `apache2` to proxy traffic to jenkins backend (`nil` by default)
+* jenkins[:http_proxy][:variant] - use `nginx` or `apache2` to proxy traffic to jenkins backend (`nil` by default)
 * jenkins[:http_proxy][:www_redirect] - add a redirect rule for 'www.*' URL requests ("disable" by default)
 * jenkins[:http_proxy][:listen_ports] - list of HTTP ports for the HTTP proxy to listen on ([80] by default)
 * jenkins[:http_proxy][:host_name] - primary vhost name for the HTTP proxy to respond to (`node[:fqdn]` by default)
@@ -77,12 +85,12 @@ Attributes
 * jenkins[:http_proxy][:client_max_body_size] - max client upload size ("1024m" by default, nginx only)
 
 Usage
-=====
+-----
 
 'default' recipe
 ----------------
 
-Installs a Jenkins CI server using the http://jenkins-ci.org/redhat RPM.  The recipe also generates an ssh private key and stores the ssh public key in the node 'jenkins[:pubkey]' attribute for use by the node recipes.
+Installs a Jenkins CI server using the http://jenkins-ci.org/war-stable WAR.  The recipe also generates an ssh private key and stores the ssh public key in the node 'jenkins[:pubkey]' attribute for use by the node recipes.
 
 'node_ssh' recipe
 -----------------
@@ -117,8 +125,8 @@ Uses the nginx::source recipe from the nginx cookbook to install an HTTP fronten
 
 Uses the apache2 recipe from the apache2 cookbook to install an HTTP frontend proxy. To automatically activate this recipe set the `node[:jenkins][:http_proxy][:variant]` to `apache2`.
 
-'jenkins_cli' resource provider
 -------------------------------
+'jenkins_cli' resource provider
 
 This resource can be used to execute the Jenkins cli from your recipes.  For example, install plugins via update center and restart Jenkins:
 
@@ -175,14 +183,14 @@ The script to generate groovy that manages a node can be used standalone.  For e
     % ruby manage_node.rb name slave-hostname remote_fs /home/jenkins ... | java -jar jenkins-cli.jar -s http://jenkins:8080/ groovy =
 
 Issues
-======
+------
 
 * CLI authentication - http://issues.jenkins-ci.org/browse/JENKINS-3796
 
 * CLI *-node commands fail with "No argument is allowed: nameofslave" - http://issues.jenkins-ci.org/browse/JENKINS-5973
 
-License & Author
-================
+License & Author(s):
+-------------------
 
 This is a downstream fork of Doug MacEachern's Hudson cookbook (https://github.com/dougm/site-cookbooks) and therefore deserves all the glory.
 
@@ -192,6 +200,7 @@ Contributor:: AJ Christensen <aj@junglist.gen.nz>
 Contributor:: Fletcher Nichol <fnichol@nichol.ca>
 Contributor:: Roman Kamyk <rkj@go2.pl>
 Contributor:: Darko Fabijan <darko@renderedtext.com>
+Contributor:: Scott Likens <scott@likens.us>
 
 Copyright:: 2010, VMware, Inc
 

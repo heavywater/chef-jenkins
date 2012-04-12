@@ -21,8 +21,8 @@
 # limitations under the License.
 #
 
-default[:jenkins][:mirror] = "http://mirrors.jenkins-ci.org"
-default[:jenkins][:package_url] = "http://pkg.jenkins-ci.org"
+default[:jenkins][:version]="latest"
+default[:jenkins][:mirror_url] = "http://mirrors.jenkins-ci.org/war-stable"
 default[:jenkins][:java_home] = ENV['JAVA_HOME']
 
 default[:jenkins][:server][:home] = "/var/lib/jenkins"
@@ -36,7 +36,7 @@ else
 end
 
 default[:jenkins][:server][:port] = 8080
-default[:jenkins][:server][:host] = node[:fqdn]
+default[:jenkins][:server][:host] = "0.0.0.0"
 default[:jenkins][:server][:url]  = "http://#{node[:jenkins][:server][:host]}:#{node[:jenkins][:server][:port]}"
 
 default[:jenkins][:iptables_allow] = "disable"
