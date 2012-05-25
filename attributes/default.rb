@@ -21,8 +21,8 @@
 # limitations under the License.
 #
 
+default[:jenkins][:version]="latest"
 default[:jenkins][:mirror] = "http://mirrors.jenkins-ci.org"
-default[:jenkins][:package_url] = "http://pkg.jenkins-ci.org"
 default[:jenkins][:java_home] = ENV['JAVA_HOME']
 
 default[:jenkins][:server][:home] = "/var/lib/jenkins"
@@ -36,14 +36,14 @@ else
 end
 
 default[:jenkins][:server][:port] = 8080
-default[:jenkins][:server][:host] = node[:fqdn]
+default[:jenkins][:server][:host] = "0.0.0.0"
 default[:jenkins][:server][:url]  = "http://#{node[:jenkins][:server][:host]}:#{node[:jenkins][:server][:port]}"
 
 default[:jenkins][:iptables_allow] = "disable"
 
 #download the latest version of plugins, bypassing update center
-#example: ["git", "URLSCM", ...]
-default[:jenkins][:server][:plugins] = []
+#example:  { 'git' => {}, 'github' => { 'version' => '1.1' }, ... }
+default[:jenkins][:server][:plugins] = {}
 
 #working around: http://tickets.opscode.com/browse/CHEF-1848
 #set to true if you have the CHEF-1848 patch applied

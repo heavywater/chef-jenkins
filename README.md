@@ -1,6 +1,13 @@
 Description
 ===========
+
 Installs and configures Jenkins CI server & node slaves.  Resource providers to support automation via jenkins-cli, including job create/update.
+
+Changelog
+=========
+
+- 0.7 - Jenkins was binding to the ip address of the primary interface instead of listening to all addresses which caused nginx to be unable to connect over localhost to Jenkins.
+- 0.8 - Convert the recipe to use only the WAR file and not the Debian package.
 
 Requirements
 ============
@@ -40,16 +47,18 @@ Where the jenkins_login recipe is simply:
   jenkins_cli "login --username #{node[:jenkins][:username]} --password #{node[:jenkins][:password]}"
 
 Attributes
-==========
+----------
 
-* jenkins[:mirror] - Base URL for downloading Jenkins (server)
+* jenkins[:version] - Specify the version of jenkins used.  By default it is latest
+* jenkins[:mirror] - Specify the base URL to download the WAR and any plugins from
 * jenkins[:java_home] - Java install path, used for for cli commands
 * jenkins[:server][:home] - JENKINS_HOME directory
 * jenkins[:server][:user] - User the Jenkins server runs as
 * jenkins[:server][:group] - Jenkins user primary group
 * jenkins[:server][:port] - TCP listen port for the Jenkins server
 * jenkins[:server][:url] - Base URL of the Jenkins server
-* jenkins[:server][:plugins] - Download the latest version of plugins in this list, bypassing update center
+* jenkins[:server][:plugins] - Download the plugins in this list, bypassing 
+  update center. 
 * jenkins[:node][:name] - Name of the node within Jenkins
 * jenkins[:node][:description] - Jenkins node description
 * jenkins[:node][:executors] - Number of node executors
@@ -69,7 +78,7 @@ Attributes
 * jenkins[:node][:ssh_private_key] - jenkins master defaults to: `~/.ssh/id_rsa` (created by the default recipe)
 * jenkins[:node][:jvm_options] - SSH slave JVM options
 * jenkins[:iptables_allow] - if iptables is enabled, add a rule passing 'jenkins[:server][:port]'
-* jenkins[:nginx][:http_proxy][:variant] - use `nginx` or `apache2` to proxy traffic to jenkins backend (`nil` by default)
+* jenkins[:http_proxy][:variant] - use `nginx` or `apache2` to proxy traffic to jenkins backend (`nil` by default)
 * jenkins[:http_proxy][:www_redirect] - add a redirect rule for 'www.*' URL requests ("disable" by default)
 * jenkins[:http_proxy][:listen_ports] - list of HTTP ports for the HTTP proxy to listen on ([80] by default)
 * jenkins[:http_proxy][:host_name] - primary vhost name for the HTTP proxy to respond to (`node[:fqdn]` by default)
@@ -77,12 +86,20 @@ Attributes
 * jenkins[:http_proxy][:client_max_body_size] - max client upload size ("1024m" by default, nginx only)
 
 Usage
-=====
+-----
 
 'default' recipe
 ----------------
 
-Installs a Jenkins CI server using the http://jenkins-ci.org/redhat RPM.  The recipe also generates an ssh private key and stores the ssh public key in the node 'jenkins[:pubkey]' attribute for use by the node recipes.
+Installs a Jenkins CI server using the http://jenkins-ci.org/war-stable WAR.  The recipe also generates an ssh private key and stores the ssh public key in the node 'jenkins[:pubkey]' attribute for use by the node recipes.
+
+This recipe will also install plugins listed in the node`[:jenkins][:plugins]`
+attribute.  This attribute should be a hash with the names of the plugins as
+keys. The values can either be empty hashes or hashes containing the keys
+'version' (the version of the plugin to install, will default to the latest),
+'hash' (the sha-256 hash of the plugin), and 'url' (an explicit download url for
+the plugin). If any of these keys are omitted, then they will be recorded after
+the first run, and will be used on subsequent runs.
 
 'node_ssh' recipe
 -----------------
@@ -117,8 +134,8 @@ Uses the nginx::source recipe from the nginx cookbook to install an HTTP fronten
 
 Uses the apache2 recipe from the apache2 cookbook to install an HTTP frontend proxy. To automatically activate this recipe set the `node[:jenkins][:http_proxy][:variant]` to `apache2`.
 
-'jenkins_cli' resource provider
 -------------------------------
+'jenkins_cli' resource provider
 
 This resource can be used to execute the Jenkins cli from your recipes.  For example, install plugins via update center and restart Jenkins:
 
@@ -167,6 +184,23 @@ The 'create' and 'update' actions require a jenkins job config.xml.  Example:
       notifies :build, resources(:jenkins_job => job_name), :immediately
     end
 
+'jenkins_plugin' resource provider
+----------------------------------
+
+This resource will install Jenkins plugins, and record their version, sha-256,
+and the url they were downloaded from.
+
+    jenkins_plugin do
+        name 'git'
+        version '1.1.18'
+        download_url 'http://mirrors.jenkins-ci.org/plugins/git/1.1.18/git.hpi'
+    end
+
+The only required attribute is the name of the plugin. If version is left out,
+it will be recorded after the plugin is installed and will be used for future
+runs of the provider, i.e. once a plugin is installed, it will not be upgraded
+unless the version is explicitly changed.
+
 'manage_node' library
 ---------------------
 
@@ -175,14 +209,14 @@ The script to generate groovy that manages a node can be used standalone.  For e
     % ruby manage_node.rb name slave-hostname remote_fs /home/jenkins ... | java -jar jenkins-cli.jar -s http://jenkins:8080/ groovy =
 
 Issues
-======
+------
 
 * CLI authentication - http://issues.jenkins-ci.org/browse/JENKINS-3796
 
 * CLI *-node commands fail with "No argument is allowed: nameofslave" - http://issues.jenkins-ci.org/browse/JENKINS-5973
 
-License & Author
-================
+License & Author(s):
+-------------------
 
 This is a downstream fork of Doug MacEachern's Hudson cookbook (https://github.com/dougm/site-cookbooks) and therefore deserves all the glory.
 
@@ -192,6 +226,7 @@ Contributor:: AJ Christensen <aj@junglist.gen.nz>
 Contributor:: Fletcher Nichol <fnichol@nichol.ca>
 Contributor:: Roman Kamyk <rkj@go2.pl>
 Contributor:: Darko Fabijan <darko@renderedtext.com>
+Contributor:: Scott Likens <scott@likens.us>
 
 Copyright:: 2010, VMware, Inc
 

@@ -54,3 +54,6 @@ nginx_site "jenkins.conf" do
     enable false
   end
 end
+service "nginx" do
+  action [:start, :enable]
+end
