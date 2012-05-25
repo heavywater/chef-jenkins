@@ -37,44 +37,47 @@ If your Jenkins instance requires authentication, you'll either need to embed us
 
 Where the jenkins_login recipe is simply:
 
-  jenkins_cli "login --username #{node[:jenkins][:username]} --password #{node[:jenkins][:password]}"
+  jenkins_cli "login --username #{node['jenkins']['username']} --password #{node['jenkins']['password']}"
 
 Attributes
 ==========
 
-* jenkins[:mirror] - Base URL for downloading Jenkins (server)
-* jenkins[:java_home] - Java install path, used for for cli commands
-* jenkins[:server][:home] - JENKINS_HOME directory
-* jenkins[:server][:user] - User the Jenkins server runs as
-* jenkins[:server][:group] - Jenkins user primary group
-* jenkins[:server][:port] - TCP listen port for the Jenkins server
-* jenkins[:server][:url] - Base URL of the Jenkins server
-* jenkins[:server][:plugins] - Download the latest version of plugins in this list, bypassing update center
-* jenkins[:node][:name] - Name of the node within Jenkins
-* jenkins[:node][:description] - Jenkins node description
-* jenkins[:node][:executors] - Number of node executors
-* jenkins[:node][:home] - Home directory ("Remote FS root") of the node
-* jenkins[:node][:labels] - Node labels
-* jenkins[:node][:mode] - Node usage mode, "normal" or "exclusive" (tied jobs only)
-* jenkins[:node][:launcher] - Node launch method, "jnlp", "ssh" or "command"
-* jenkins[:node][:availability] - "always" keeps node on-line, "demand" off-lines when idle
-* jenkins[:node][:in_demand_delay] - number of minutes for which jobs must be waiting in the queue before attempting to launch this slave.
-* jenkins[:node][:idle_delay] - number of minutes that this slave must remain idle before taking it off-line.
-* jenkins[:node][:env] - "Node Properties" -> "Environment Variables"
-* jenkins[:node][:user] - user the slave runs as
-* jenkins[:node][:ssh_host] - Hostname or IP Jenkins should connect to when launching an SSH slave
-* jenkins[:node][:ssh_port] - SSH slave port
-* jenkins[:node][:ssh_user] - SSH slave user name (only required if jenkins server and slave user is different)
-* jenkins[:node][:ssh_pass] - SSH slave password (not required when server is installed via default recipe)
-* jenkins[:node][:ssh_private_key] - jenkins master defaults to: `~/.ssh/id_rsa` (created by the default recipe)
-* jenkins[:node][:jvm_options] - SSH slave JVM options
-* jenkins[:iptables_allow] - if iptables is enabled, add a rule passing 'jenkins[:server][:port]'
-* jenkins[:nginx][:http_proxy][:variant] - use `nginx` or `apache2` to proxy traffic to jenkins backend (`nil` by default)
-* jenkins[:http_proxy][:www_redirect] - add a redirect rule for 'www.*' URL requests ("disable" by default)
-* jenkins[:http_proxy][:listen_ports] - list of HTTP ports for the HTTP proxy to listen on ([80] by default)
-* jenkins[:http_proxy][:host_name] - primary vhost name for the HTTP proxy to respond to (`node[:fqdn]` by default)
-* jenkins[:http_proxy][:host_aliases] - optional list of other host aliases to respond to (empty by default)
-* jenkins[:http_proxy][:client_max_body_size] - max client upload size ("1024m" by default, nginx only)
+* jenkins['mirror'] - Base URL for downloading Jenkins (server)
+* jenkins['java_home'] - Java install path, used for for cli commands
+* jenkins['server']['home'] - JENKINS_HOME directory
+* jenkins['server']['user'] - User the Jenkins server runs as
+* jenkins['server']['group'] - Jenkins user primary group
+* jenkins['server']['port'] - TCP listen port for the Jenkins server
+* jenkins['server']['url'] - Base URL of the Jenkins server
+* jenkins['server']['plugins'] - Download the latest version of plugins in this list, bypassing update center
+* jenkins['node']['name'] - Name of the node within Jenkins
+* jenkins['node']['description'] - Jenkins node description
+* jenkins['node']['executors'] - Number of node executors
+* jenkins['node']['home'] - Home directory ("Remote FS root") of the node
+* jenkins['node']['labels'] - Node labels
+* jenkins['node']['mode'] - Node usage mode, "normal" or "exclusive" (tied jobs only)
+* jenkins['node']['launcher'] - Node launch method, "jnlp", "ssh" or "command"
+* jenkins['node']['availability'] - "always" keeps node on-line, "demand" off-lines when idle
+* jenkins['node']['in_demand_delay'] - number of minutes for which jobs must be waiting in the queue before attempting to launch this slave.
+* jenkins['node']['idle_delay'] - number of minutes that this slave must remain idle before taking it off-line.
+* jenkins['node']['env'] - "Node Properties" -> "Environment Variables"
+* jenkins['node']['user'] - user the slave runs as
+* jenkins['node']['ssh_host'] - Hostname or IP Jenkins should connect to when launching an SSH slave
+* jenkins['node']['ssh_port'] - SSH slave port
+* jenkins['node']['ssh_user'] - SSH slave user name (only required if jenkins server and slave user is different)
+* jenkins['node']['ssh_pass'] - SSH slave password (not required when server is installed via default recipe)
+* jenkins['node']['ssh_private_key'] - jenkins master defaults to: `~/.ssh/id_rsa` (created by the default recipe)
+* jenkins['node']['jvm_options'] - SSH slave JVM options
+* jenkins['iptables_allow'] - if iptables is enabled, add a rule passing 'jenkins['server']['port']'
+* jenkins['nginx']['http_proxy']['variant'] - use `nginx` or `apache2` to proxy traffic to jenkins backend (`nil` by default)
+* jenkins['http_proxy']['www_redirect'] - add a redirect rule for 'www.*' URL requests ("disable" by default)
+* jenkins['http_proxy']['listen_ports'] - list of HTTP ports for the HTTP proxy to listen on ([80] by default)
+* jenkins['http_proxy']['host_name'] - primary vhost name for the HTTP proxy to respond to (`node['fqdn']` by default)
+* jenkins['http_proxy']['host_aliases'] - optional list of other host aliases to respond to (empty by default)
+* jenkins['http_proxy']['client_max_body_size'] - max client upload size ("1024m" by default, nginx only)
+* jenkins['http_proxy']['basic_auth'] - boolean, whether basic auth gets enabled in proxy_apache2 or not. (default true)
+* jenkins['http_proxy']['basic_auth_username'] - used in the proxy_apache2 recipe, (default jenkins)
+* jenkins['http_proxy']['basic_auth_password'] - used in the proxy_apache2 recipe, (defualt jenkins)
 
 Usage
 =====
@@ -82,12 +85,12 @@ Usage
 'default' recipe
 ----------------
 
-Installs a Jenkins CI server using the http://jenkins-ci.org/redhat RPM.  The recipe also generates an ssh private key and stores the ssh public key in the node 'jenkins[:pubkey]' attribute for use by the node recipes.
+Installs a Jenkins CI server using the http://jenkins-ci.org/redhat RPM.  The recipe also generates an ssh private key and stores the ssh public key in the node 'jenkins['pubkey']' attribute for use by the node recipes.
 
 'node_ssh' recipe
 -----------------
 
-Creates the user and group for the Jenkins slave to run as and sets `.ssh/authorized_keys` to the 'jenkins[:pubkey]' attribute.  The 'jenkins-cli.jar'[1] is downloaded from the Jenkins server and used to manage the nodes via the 'groovy'[2] cli command.  Jenkins is configured to launch a slave agent on the node using its SSH slave plugin[3].
+Creates the user and group for the Jenkins slave to run as and sets `.ssh/authorized_keys` to the 'jenkins['pubkey']' attribute.  The 'jenkins-cli.jar'[1] is downloaded from the Jenkins server and used to manage the nodes via the 'groovy'[2] cli command.  Jenkins is configured to launch a slave agent on the node using its SSH slave plugin[3].
 
 [1] http://wiki.jenkins-ci.org/display/JENKINS/Jenkins+CLI
 [2] http://wiki.jenkins-ci.org/display/JENKINS/Jenkins+Script+Console
@@ -110,12 +113,12 @@ Creates the home directory for the node slave and sets 'JENKINS_HOME' and 'JENKI
 'proxy_nginx' recipe
 --------------------
 
-Uses the nginx::source recipe from the nginx cookbook to install an HTTP frontend proxy. To automatically activate this recipe set the `node[:jenkins][:http_proxy][:variant]` to `nginx`.
+Uses the nginx::source recipe from the nginx cookbook to install an HTTP frontend proxy. To automatically activate this recipe set the `node['jenkins']['http_proxy']['variant']` to `nginx`.
 
 'proxy_apache2' recipe
 ----------------------
 
-Uses the apache2 recipe from the apache2 cookbook to install an HTTP frontend proxy. To automatically activate this recipe set the `node[:jenkins][:http_proxy][:variant]` to `apache2`.
+Uses the apache2 recipe from the apache2 cookbook to install an HTTP frontend proxy. To automatically activate this recipe set the `node['jenkins']['http_proxy']['variant']` to `apache2`.
 
 'jenkins_cli' resource provider
 -------------------------------
@@ -132,12 +135,12 @@ This resource can be used to execute the Jenkins cli from your recipes.  For exa
 
 This resource can be used to configure nodes as the 'node_ssh' and 'node_windows' recipes do or "Launch slave via execution of command on the Master".
 
-    jenkins_node node[:fqdn] do
+    jenkins_node node['fqdn'] do
       description  "My node for things, stuff and whatnot"
       executors    5
       remote_fs    "/var/jenkins"
       launcher     "command"
-      command      "ssh -i my_key #{node[:fqdn]} java -jar #{remote_fs}/slave.jar"
+      command      "ssh -i my_key #{node['fqdn']} java -jar #{remote_fs}/slave.jar"
       env          "ANT_HOME" => "/usr/local/ant", "M2_REPO" => "/dev/null"
     end
 
@@ -151,9 +154,9 @@ This resource manages jenkins jobs, supporting the following actions:
 The 'create' and 'update' actions require a jenkins job config.xml.  Example:
 
     git_branch = 'master'
-    job_name = "sigar-#{branch}-#{node[:os]}-#{node[:kernel][:machine]}"
+    job_name = "sigar-#{branch}-#{node['os']}-#{node['kernel']['machine']}"
 
-    job_config = File.join(node[:jenkins][:node][:home], "#{job_name}-config.xml")
+    job_config = File.join(node['jenkins']['node']['home'], "#{job_name}-config.xml")
 
     jenkins_job job_name do
       action :nothing
@@ -162,7 +165,7 @@ The 'create' and 'update' actions require a jenkins job config.xml.  Example:
 
     template job_config do
       source "sigar-jenkins-config.xml"
-      variables :job_name => job_name, :branch => git_branch, :node => node[:fqdn]
+      variables :job_name => job_name, :branch => git_branch, :node => node['fqdn']
       notifies :update, resources(:jenkins_job => job_name), :immediately
       notifies :build, resources(:jenkins_job => job_name), :immediately
     end

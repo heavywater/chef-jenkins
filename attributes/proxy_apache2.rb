@@ -1,10 +1,10 @@
 #
 # Cookbook Name:: jenkins
-# Recipe:: iptables
+# Attirbutes:: proxy_apache2
 #
 # Author:: Fletcher Nichol <fnichol@nichol.ca>
 #
-# Copyright 2011, Fletcher Nichol.
+# Copyright 2011, Fletcher Nichol
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,13 +19,4 @@
 # limitations under the License.
 #
 
-if platform?("redhat","centos","scientific","amazon","debian","ubuntu")
-  include_recipe "iptables"
-  iptables_rule "port_jenkins" do
-    if node['jenkins']['iptables_allow'] == "enable"
-      enable true
-    else
-      enable false
-    end
-  end
-end
+include_attribute "apache2"

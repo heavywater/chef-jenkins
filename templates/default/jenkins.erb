@@ -10,16 +10,16 @@ JAVA=/usr/bin/java
 #JAVA_ARGS="-Xmx256m"
 #JAVA_ARGS="-Djava.net.preferIPv4Stack=true" # make jenkins listen on IPv4 address
 
-PIDFILE=/var/run/jenkins/jenkins.pid
+PIDFILE=<%= node['jenkins']['pid_file'] %>
 
 # user id to be invoked as (otherwise will run as root; not wise!)
-JENKINS_USER=<%= node.jenkins.server.user %>
+JENKINS_USER=<%= node['jenkins']['server']['user'] %>
 
 # location of the jenkins war file
 JENKINS_WAR=/usr/share/jenkins/jenkins.war
 
 # jenkins home location
-JENKINS_HOME=<%= node.jenkins.server.home %>
+JENKINS_HOME=<%= node['jenkins']['server']['home'] %>
 
 # set this to false if you don't want Hudson to run by itself
 # in this set up, you are expected to provide a servlet container
@@ -38,8 +38,8 @@ JENKINS_LOG=/var/log/jenkins/$NAME.log
 MAXOPENFILES=8192
 
 # port for HTTP connector (default 8080; disable with -1)
-HTTP_HOST=<%= node.jenkins.server.host %>
-HTTP_PORT=<%= node.jenkins.server.port %>
+HTTP_HOST=<%= node['jenkins']['server']['host'] %>
+HTTP_PORT=<%= node['jenkins']['server']['port'] %>
 
 # port for AJP connector (disabled by default)
 AJP_PORT=-1
