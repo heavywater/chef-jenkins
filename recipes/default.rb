@@ -60,13 +60,11 @@ directory "#{node[:jenkins][:server][:home]}/plugins" do
   only_if { node[:jenkins][:server][:plugins].size > 0 }
 end
 
-node[:jenkins][:server][:plugins].each do |name|
-  remote_file "#{node[:jenkins][:server][:home]}/plugins/#{name}.hpi" do
-    source "#{node[:jenkins][:mirror]}/plugins/#{name}/latest/#{name}.hpi"
-    backup false
-    owner node[:jenkins][:server][:user]
-    group node[:jenkins][:server][:group]
-  end
+node[:jenkins][:server][:plugins].each do |name, attributes|
+    chef_jenkins_plugin name do
+        version attributes[:version]
+        download_url attributes[:download_url]
+    end
 end
 
 directory "/usr/share/jenkins" do
@@ -77,7 +75,7 @@ directory "/usr/share/jenkins" do
 end
 
 remote_file "/usr/share/jenkins/jenkins.war" do
-  source "#{node[:jenkins][:mirror_url]}/#{node[:jenkins][:version]}/jenkins.war"
+  source "#{node[:jenkins][:mirror]}/war-stable/#{node[:jenkins][:version]}/jenkins.war"
   owner "root"
   group "root"
   mode 0644

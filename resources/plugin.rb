@@ -1,6 +1,8 @@
 #
 # Cookbook Name:: jenkins
-# Reseource:: plugin
+# Resource:: plugin
+#
+# Author:: Greg Symons <gsymons@drillinginfo.com>
 #
 # A resource definition for Jenkins plugins.
 #

@@ -4,6 +4,8 @@
 #
 # A LWRP for installing Jenkins plugins.
 #
+# Author:: Greg Symons <gsymons@drillinginfo.com>
+#
 # Copyright 2012, DrillingInfo, Inc
 #
 
@@ -11,32 +13,34 @@ require 'chef/mixin/checksum'
 
 include Chef::Mixin::Checksum
 
-PLUGINS_BASE = "http://updates.jenkins-ci.org/download/plugins"
-LATEST_PLUGIN_BASE = "http://updates.jenkins-ci.org/latest"
-PLUGINS_HOME = "/var/lib/jenkins/plugins"
-
 action :install do
     
     log "Installing jenkins plugin '#{new_resource.name}' from #{download_url_for new_resource}"
 
     remote_file destination_for new_resource do
         source download_url_for new_resource
-        owner "jenkins"
-        group "adm"
-        mode  "750"
+        owner node[:jenkins][:user]
+        group node[:jenkins][:group]
+        mode  "644"
         backup false
-        notifies :record, resources(:jenkins_plugin => new_resource.name), :delayed
+        checksum sha_for(new_resource)
+        notifies :record, resources('chef-jenkins_plugin' => new_resource.name), :delayed
         notifies :restart, resources(:service => "jenkins"), :delayed
     end
-    
 end
 
 action :record do
+    chef_gem 'rubyzip'
+
     record_plugin_information_for new_resource
 end
 
 def destination_for new_resource
-    return "#{PLUGINS_HOME}/#{plugin_filename_for new_resource}"
+    return "#{plugins_home}/#{plugin_filename_for new_resource}"
+end
+
+def plugins_home
+    "#{node[:jenkins][:server][:home]}/plugins"
 end
 
 def download_url_for new_resource
@@ -48,11 +52,12 @@ def download_url_for new_resource
 end
 
 def calculated_url_for new_resource
-    if new_resource.version.nil? then
-        "#{LATEST_PLUGIN_BASE}/#{plugin_filename_for new_resource}"
-    else
-        "#{PLUGINS_BASE}/#{new_resource.name}/#{new_resource.version}/#{plugin_filename_for new_resource}"
-    end
+    plugins_base_url = "#{node[:jenkins][:mirror]}/plugins"
+    version = new_resource.version || 'latest'
+    plugin_file = plugin_filename_for new_resource
+    plugin = new_resource.name
+
+    "#{plugins_base_url}/#{plugin}/#{version}/#{plugin_file}"
 end
 
 def plugin_filename_for new_resource
@@ -60,9 +65,9 @@ def plugin_filename_for new_resource
 end
 
 def record_plugin_information_for new_resource
-    node.set[:jenkins][:plugins][new_resource.name][:version] = plugin_version
-    node.set[:jenkins][:plugins][new_resource.name][:url] = download_url_for new_resource
-    node.set[:jenkins][:plugins][new_resource.name][:sha] = sha_for new_resource
+    node.set[:jenkins][:server][:plugins][new_resource.name][:version] = plugin_version
+    node.set[:jenkins][:server][:plugins][new_resource.name][:url] = download_url_for new_resource
+    node.set[:jenkins][:server][:plugins][new_resource.name][:sha] = sha_for new_resource
 end
 
 def plugin_version
@@ -89,5 +94,7 @@ def plugin_version_from_file new_resource
 end
 
 def sha_for new_resource
-    checksum(destination_for new_resource)
+    if ::File.exists? destination_for new_resource
+        checksum(destination_for new_resource)
+    end
 end
