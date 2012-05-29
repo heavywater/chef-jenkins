@@ -38,12 +38,11 @@ def action_run
   status, stdout, stderr = output_of_command(args[:command], args)
   if status.exitstatus == 0
     new_resource.block.call(stdout) if new_resource.block
-    new_resource.updated_by_last_action(true)
     Chef::Log.info("Ran #{new_resource} successfully")
   else
     command_output =  "JENKINS STDOUT: #{stdout}"
     command_output << "JENKINS STDERR: #{stderr}"
     handle_command_failures(status, command_output, args)
-    new_resource.updated_by_last_action(true)
   end
+  new_resource.updated_by_last_action(true)
 end

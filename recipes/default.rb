@@ -52,13 +52,11 @@ sshkey = SSHKey.generate(:type => 'RSA', :comment => "#{node['jenkins']['server'
 node.set_unless['jenkins']['server']['pubkey'] = sshkey.ssh_public_key
     
 # Save public_key to node, unless it is already set.
-unless Chef::Config['solo']
-  ruby_block "save node data" do
-    block do
-      node.save
-    end
-    action :create
+ruby_block "save node data" do
+  block do
+    node.save unless Chef::Config['solo']
   end
+  action :create
 end
 
 # Save private key, unless pkey file exists
@@ -142,7 +140,7 @@ ruby_block "block_until_operational" do
     end
 
     loop do
-      url = URI.parse("#{node.jenkins.server.url}/job/test/config.xml")
+      url = URI.parse("#{node['jenkins']['server']['url']}/job/test/config.xml")
       res = Chef::REST::RESTRequest.new(:GET, url, nil).call
       break if res.kind_of?(Net::HTTPSuccess) or res.kind_of?(Net::HTTPNotFound)
       Chef::Log.debug "service[jenkins] not responding OK to GET / #{res.inspect}"
@@ -187,10 +185,8 @@ end
 
 # Front Jenkins with an HTTP server
 case node['jenkins']['http_proxy']['variant']
-when "nginx"
-  include_recipe "jenkins::proxy_nginx"
-when "apache2"
-  include_recipe "jenkins::proxy_apache2"
+when "nginx", "apache2"
+  include_recipe "jenkins::proxy_#{node['jenkins']['http_proxy']['variant']}"
 end
 
 if node['jenkins']['iptables_allow'] == "enable"

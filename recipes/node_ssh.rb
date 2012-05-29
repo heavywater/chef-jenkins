@@ -26,7 +26,9 @@ unless node['jenkins']['server']['pubkey']
   if host == node['fqdn']
     host = URI.parse(node['jenkins']['server']['url']).host
   end
-  unless Chef::Config[:solo]
+  if Chef::Config['solo']
+    Chef::Log.warn("This recipe uses search. Chef Solo does not support search.")
+  else
     jenkins_node = search(:node, "fqdn:#{host}").first
     node.set['jenkins']['server']['pubkey'] = jenkins_node['jenkins']['server']['pubkey']
   end

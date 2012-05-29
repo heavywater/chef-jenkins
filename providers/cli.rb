@@ -30,12 +30,14 @@ def action_run
     action :create
     path node['jenkins']['node']['home']
   end
+  new_resource.updated_by_last_action(true)
 
   cli_jar = ::File.join(home, "jenkins-cli.jar")
   remote_file cli_jar do
     source "#{url}/jnlpJars/jenkins-cli.jar"
     not_if { ::File.exists?(cli_jar) }
   end
+  new_resource.updated_by_last_action(true)
 
   java_home = node['jenkins']['java_home'] || (node.has_key?(:java) ? node['java']['jdk_dir'] : nil)
   if java_home == nil
@@ -49,6 +51,6 @@ def action_run
   jenkins_execute command do
     cwd home
     block { |stdout| new_resource.block.call(stdout) } if new_resource.block
-    new_resource.updated_by_last_action(true)
   end
+  new_resource.updated_by_last_action(true)
 end
