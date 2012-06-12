@@ -159,9 +159,15 @@ log "jenkins: install and start" do
   end
 end
 
-template "/etc/default/jenkins" do
-  only_if { node['platform'] == "ubuntu" || node['platform'] == "debian" }
+case node['platform']
+when "ubuntu", "debian"
+	template "/etc/default/jenkins"
+when "centos", "redhat", "suse", "fedora", "scientific", "amazon"
+	template "/etc/sysconfig/jenkins" do
+		source jenkins-rh.erb
+	end
 end
+
 
 package "jenkins"
 
