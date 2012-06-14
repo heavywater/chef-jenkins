@@ -155,17 +155,14 @@ log "jenkins: install and start" do
   notifies :start, "service[jenkins]", :immediately unless node['jenkins']['install_starts_service']
   notifies :create, "ruby_block[block_until_operational]", :immediately
   not_if do
-    File.exists? "/usr/share/jenkins/jenkins.war"
+    File.exists?(node['jenkins']['war_file'])
   end
 end
 
-case node['platform']
-when "ubuntu", "debian"
-	template "/etc/default/jenkins"
-when "centos", "redhat", "suse", "fedora", "scientific", "amazon"
-	template "/etc/sysconfig/jenkins" do
-		source jenkins-rh.erb
-	end
+unless node['jenkins']['sysconf_template'].nil?
+  template node['jenkins']['sysconf_template'] do
+    notifies :restart, "service[jenkins]", :immediately 
+  end
 end
 
 

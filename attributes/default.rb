@@ -27,16 +27,25 @@ default['jenkins']['java_home'] = ENV['JAVA_HOME']
 
 default['jenkins']['server']['home'] = "/var/lib/jenkins"
 default['jenkins']['server']['user'] = "jenkins"
+default['jenkins']['java_options'] = "-Xmx256m -Djava.awt.headless=true"
+default['jenkins']['ajp_port'] = -1
+default['jenkins']['sysconf_template']
+default['jenkins']['pid_file']
+default['jenkins']['war_file']
 
 case node['platform']
-when "debian", "ubuntu" 
+when "debian", "ubuntu"
+  default['jenkins']['sysconf_template'] = "/etc/default/jenkins" 
   default['jenkins']['server']['group'] = "nogroup"
   default['jenkins']['install_starts_service'] = true
   default['jenkins']['pid_file'] = "/var/run/jenkins/jenkins.pid"
+  default['jenkins']['war_file'] = "/usr/share/jenkins/jenkins.war"
 when "redhat", "centos", "scientific", "amazon"
+  default['jenkins']['sysconf_template'] = "/etc/sysconfig/jenkins"
   default['jenkins']['install_starts_service'] = true 
   default['jenkins']['server']['group'] = node['jenkins']['server']['user'] 
   default['jenkins']['pid_file'] = "/var/run/jenkins.pid"
+  default['jenkins']['war_file'] = "/usr/lib/jenkins/jenkins.war"
 else
   default['jenkins']['install_starts_service'] = false
   default['jenkins']['server']['group'] = node['jenkins']['server']['user']

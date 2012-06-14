@@ -1,3 +1,8 @@
+## v0.7.1
+
+* Add a few attribute knobs for java_options, pid and war file locations.
+* Make sysconfig template platform neutral for redhat/debian distributions
+
 ## v0.7.0
 
 * General clean up, per Foodcritic compliance

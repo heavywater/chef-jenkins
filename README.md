@@ -44,6 +44,11 @@ Attributes
 
 * jenkins['mirror'] - Base URL for downloading Jenkins (server)
 * jenkins['java_home'] - Java install path, used for for cli commands
+* jenkins['java_options'] - Java options passed to sysconfig template
+* jenkins['ajp_port'] - Set to 8009 for AJP, or -1 to disable.  Default is disabled.
+* jenkins['sysconf_template'] - sysconfig file for platform specific init scripts
+* jenkins['pid_file'] - location of pid file
+* jenkins['war_file'] - location of jenkins WAR file
 * jenkins['server']['home'] - JENKINS_HOME directory
 * jenkins['server']['user'] - User the Jenkins server runs as
 * jenkins['server']['group'] - Jenkins user primary group
