@@ -25,7 +25,7 @@ JENKINS_JAVA_OPTIONS="<%= node['jenkins']['java_options'] %>"
 <% else -%>
 #JAVA_ARGS="-Xmx256m"
 #JAVA_ARGS="-Djava.net.preferIPv4Stack=true" # make jenkins listen on IPv4 address
-JAVA_ARGS="<% node['jenkins']['java_options'] %>
+JAVA_ARGS="<% node['jenkins']['java_options'] %>"
 <% end -%>
 
 <% case node['platform'] when 'redhat','centos','scientific','amazon','oracle' -%>
