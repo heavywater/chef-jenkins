@@ -49,30 +49,30 @@ end
 Gem.clear_paths
 require 'sshkey'
 sshkey = SSHKey.generate(:type => 'RSA', :comment => "#{node['jenkins']['server']['user']}@#{node['fqdn']}")
-node.set_unless['jenkins']['server']['pubkey'] = sshkey.ssh_public_key
-    
-# Save public_key to node, unless it is already set.
-ruby_block "save node data" do
-  block do
-    node.save unless Chef::Config['solo']
-  end
-  action :create
-end
 
 # Save private key, unless pkey file exists
 template pkey do
-  owner  node['jenkins']['server']['user']
+  owner node['jenkins']['server']['user']
   group node['jenkins']['server']['group']
   variables( :ssh_private_key => sshkey.private_key )
   mode 0600
-  not_if { File.exists?("#{node['jenkins']['server']['home']}/.ssh/id_rsa") }
+  action :create_if_missing
 end
 
 # Template public key out to pkey.pub file
 template "#{pkey}.pub" do
-  owner  node['jenkins']['server']['user']
+  owner node['jenkins']['server']['user']
   group node['jenkins']['server']['group']
+  variables( :ssh_public_key => sshkey.ssh_public_key )
   mode 0644
+  action :create_if_missing
+end
+
+ruby_block "store jenkins ssh pubkey" do
+  block do
+    node.set[:jenkins][:server][:pubkey] = File.read("#{pkey}.pub")
+    node.save unless Chef::Config['solo']
+  end
 end
 
 directory "#{node['jenkins']['server']['home']}/plugins" do
