@@ -31,6 +31,8 @@ tmp = "/tmp"
 user node['jenkins']['server']['user'] do
   home node['jenkins']['server']['home']
   shell "/bin/bash"
+  system true
+  uid node['jenkins']['server']['uid'] if node['jenkins']['server']['uid']
 end
 
 directory node['jenkins']['server']['home'] do
