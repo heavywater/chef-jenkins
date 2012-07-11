@@ -34,12 +34,15 @@ end
 
 host_name = node[:jenkins][:http_proxy][:host_name] || node[:fqdn]
 
+skip_basic_auth = node['jenkins']['http_proxy']['basic_auth_username'].empty? || node['jenkins']['http_proxy']['basic_auth_password'].empty?
+
 template "#{node.apache.dir}/htpasswd" do
   variables( :username => node.jenkins.http_proxy.basic_auth_username,
              :password => node.jenkins.http_proxy.basic_auth_password)
   owner node.apache.user
   group node.apache.user
   mode 0600
+  not_if { skip_basic_auth }
 end
 
 template "#{node[:apache][:dir]}/sites-available/jenkins" do
@@ -47,13 +50,13 @@ template "#{node[:apache][:dir]}/sites-available/jenkins" do
   owner       'root'
   group       'root'
   mode        '0644'
-  variables(
+  variables({
     :host_name        => host_name,
     :host_aliases     => node[:jenkins][:http_proxy][:host_aliases],
     :listen_ports     => node[:jenkins][:http_proxy][:listen_ports],
-    :www_redirect     => www_redirect
-  )
-
+    :www_redirect     => www_redirect,
+    :skip_basic_auth  => skip_basic_auth,
+  })
   if File.exists?("#{node[:apache][:dir]}/sites-enabled/jenkins")
     notifies  :restart, 'service[apache2]'
   end

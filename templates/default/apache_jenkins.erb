@@ -29,6 +29,7 @@
   ProxyPreserveHost on
   ProxyPass         /  http://localhost:<%= node[:jenkins][:server][:port] %>/
   ProxyPassReverse  /  http://localhost:<%= node[:jenkins][:server][:port] %>/
+<% unless @skip_basic_auth -%>
 
   <Location />
     AuthType basic
@@ -37,4 +38,5 @@
     AuthUserFile <%= File.join(node.apache.dir, "htpasswd") %>
     require valid-user
   </Location>
+<% end -%>
 </VirtualHost>
