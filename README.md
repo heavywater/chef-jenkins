@@ -10,6 +10,11 @@ Chef
 
 * Chef version 0.9.10 or higher
 
+Cookbooks
+---------
+
+* `java`
+
 Platform
 --------
 
