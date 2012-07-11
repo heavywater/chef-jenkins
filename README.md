@@ -75,6 +75,9 @@ Attributes
 * jenkins[:http_proxy][:host_name] - primary vhost name for the HTTP proxy to respond to (`node[:fqdn]` by default)
 * jenkins[:http_proxy][:host_aliases] - optional list of other host aliases to respond to (empty by default)
 * jenkins[:http_proxy][:client_max_body_size] - max client upload size ("1024m" by default, nginx only)
+* jenkins[:http_proxy][:basic_auth_username],
+* jenkins[:http_proxy][:basic_auth_password] - HTTP Basic Auth username/password. Defaults to jenkins/jenkins.
+Setting either one to an empty string will disable basic auth.
 
 Usage
 =====
