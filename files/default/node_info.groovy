@@ -1,3 +1,4 @@
+/*
 #
 # Cookbook Name:: jenkins
 # Based on hudson
@@ -20,8 +21,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+*/
 
-import jenkins.slaves.*
+import hudson.slaves.*
+import hudson.model.*
 import jenkins.model.*
 
 def toJSON(node) {
