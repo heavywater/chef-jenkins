@@ -98,8 +98,8 @@ def jenkins_node_manage(args)
       password = %Q("#{args[:password]}")
     end
 
-    launcher = %Q(new_ssh_launcher(["#{args[:host]}", #{args[:port]}, "#{args[:username]}", #{password},
-                                    "#{args[:private_key]}", "#{args[:jvm_options]}"] as Object[]))
+   launcher = %Q(new_ssh_launcher(["#{args[:host]}", #{args[:port]}, "#{args[:username]}", #{password},
+                                    "#{args[:private_key]}", "#{args[:jvm_options].gsub('\\', '/') }"] as Object[]))
   end
 
   remote_fs = args[:remote_fs].gsub('\\', '\\\\\\') # C:\jenkins -> C:\\jenkins
@@ -112,7 +112,8 @@ def jenkins_node_manage(args)
 
   return <<EOF
 import jenkins.model.*
-import jenkins.slaves.*
+import hudson.model.*
+import hudson.slaves.*
 
 app = Jenkins.instance
 env = #{env}
@@ -120,7 +121,7 @@ props = []
 
 def new_ssh_launcher(args) {
   Jenkins.instance.pluginManager.getPlugin("ssh-slaves").classLoader.
-    loadClass("jenkins.plugins.sshslaves.SSHLauncher").
+    loadClass("hudson.plugins.sshslaves.SSHLauncher").
       getConstructor([String, int, String, String, String, String] as Class[]).newInstance(args)
 }
 
