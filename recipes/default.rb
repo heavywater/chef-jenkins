@@ -154,7 +154,21 @@ log "jenkins: install and start" do
   end
 end
 
-template "/etc/default/jenkins"
+bound_interface = node[:jenkins][:server][:url]
+case node[:jenkins][:http_proxy][:variant]
+when "nginx","apache2"
+    bound_interface = "localhost"
+end
+node[:jenkins][:server][:url]  = "http://#{bound_interface}:#{node[:jenkins][:server][:port]}"
+
+template "/etc/default/jenkins" do
+  source "jenkins.erb"
+  owner       'root'
+  group       'root'
+  mode        '0644'
+  variables :bound_interface => bound_interface
+  notifies  :restart, 'service[jenkins]'
+end
 
 package "jenkins" do
   action :nothing

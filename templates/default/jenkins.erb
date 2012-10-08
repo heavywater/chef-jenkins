@@ -38,7 +38,7 @@ JENKINS_LOG=/var/log/jenkins/$NAME.log
 MAXOPENFILES=8192
 
 # port for HTTP connector (default 8080; disable with -1)
-HTTP_HOST=<%= node.jenkins.server.host %>
+HTTP_HOST=<%= @bound_interface %>
 HTTP_PORT=<%= node.jenkins.server.port %>
 
 # port for AJP connector (disabled by default)
