@@ -41,6 +41,28 @@ directory "#{node[:jenkins][:server][:home]}/.ssh" do
   group node[:jenkins][:server][:group]
 end
 
+#cookbook_file "#{pkey}" do
+  #source "id_rsa"
+  #mode 0600
+  #owner node[:jenkins][:server][:user]
+  #group node[:jenkins][:server][:group]
+#end
+
+#cookbook_file "#{pkey}.pub" do
+  #source "id_rsa.pub"
+  #mode 0644
+  #owner node[:jenkins][:server][:user]
+  #group node[:jenkins][:server][:group]
+#end
+
+cookbook_file "#{node[:jenkins][:server][:home]}/.ssh/known_hosts" do
+  source "github_keys.pub"
+  mode 0644
+  owner node[:jenkins][:server][:user]
+  group node[:jenkins][:server][:group]
+end
+
+
 execute "ssh-keygen -f #{pkey} -N ''" do
   user  node[:jenkins][:server][:user]
   group node[:jenkins][:server][:group]
@@ -51,6 +73,13 @@ ruby_block "store jenkins ssh pubkey" do
   block do
     node.set[:jenkins][:server][:pubkey] = File.open("#{pkey}.pub") { |f| f.gets }
   end
+end
+
+template "#{node[:jenkins][:server][:home]}/.gitconfig" do
+  source "dot_gitconfig.erb"
+  mode 0664
+  owner node[:jenkins][:server][:user]
+  group node[:jenkins][:server][:group]
 end
 
 directory "#{node[:jenkins][:server][:home]}/plugins" do

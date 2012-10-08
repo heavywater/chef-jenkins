@@ -8,8 +8,7 @@
 #
 # Copyright 2010, VMware, Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
+# Licensed under the Apache License, Version 2.0 (the "License"); # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
@@ -24,6 +23,8 @@
 default[:jenkins][:mirror] = "http://mirrors.jenkins-ci.org"
 default[:jenkins][:package_url] = "http://pkg.jenkins-ci.org"
 default[:jenkins][:java_home] = ENV['JAVA_HOME']
+default[:jenkins][:build_user_email] = "jenkins-build@#{node[:fdqn]}"
+default[:jenkins][:build_user_name] = "automated build process"
 
 default[:jenkins][:server][:home] = "/var/lib/jenkins"
 default[:jenkins][:server][:user] = "jenkins"
