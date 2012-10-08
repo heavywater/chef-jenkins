@@ -33,7 +33,7 @@ end
 
 def job_exists
   url = URI.parse(job_url)
-  res = Chef::REST::RESTRequest.new(:GET, url, nil).call
+  res = Chef::REST::RESTRequest.new(:GET, url, {}).call
   Chef::Log.debug("[jenkins_job] GET #{url.request_uri} == #{res.code}")
   res.kind_of?(Net::HTTPSuccess)
 end
@@ -50,16 +50,18 @@ end
 
 def action_create
   unless job_exists
+    Chef::Log.debug("[jenkins_job] running create-job for #{@new_resource}")
     jenkins_cli "create-job #{@new_resource.job_name} < #{@new_resource.config}"
   end
 end
 
-#there is no cli update-job command
 def action_update
   if job_exists
-    post_job(job_url)
+    Chef::Log.debug("[jenkins_job] running update-job for #{@new_resource}")
+    jenkins_cli "update-job #{@new_resource.job_name} < #{@new_resource.config}"
   else
-    post_job(new_job_url)
+    Chef::Log.debug("[jenkins_job] job does not exist. running create-job for #{@new_resource}")
+    jenkins_cli "create-job #{@new_resource.job_name} < #{@new_resource.config}"
   end
 end
 
