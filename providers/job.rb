@@ -33,7 +33,7 @@ end
 
 def job_exists
   url = URI.parse(job_url)
-  res = Chef::REST::RESTRequest.new(:GET, url, nil).call
+  res = Chef::REST::RESTRequest.new(:GET, url, {}).call
   Chef::Log.debug("[jenkins_job] GET #{url.request_uri} == #{res.code}")
   res.kind_of?(Net::HTTPSuccess)
 end
