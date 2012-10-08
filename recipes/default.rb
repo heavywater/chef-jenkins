@@ -156,9 +156,20 @@ end
 
 template "/etc/default/jenkins"
 
+template "#{node[:jenkins][:server][:home]}/hudson.tasks.Maven.xml" do
+  owner       'jenkins'
+  group       'jenkins'
+  mode        '0644'
+  variables(
+    :m2label => "maven#{node[:maven][:version]}",
+    :m2home => node[:maven][:m2_home]
+  )
+end
+
 package "jenkins" do
   action :nothing
   notifies :create, "template[/etc/default/jenkins]", :immediately
+  notifies :create, "template[#{node[:jenkins][:server][:home]}/hudson.tasks.Maven.xml]", :immediately
 end
 
 # restart if this run only added new plugins
