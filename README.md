@@ -52,6 +52,7 @@ Attributes
 * jenkins['server']['home'] - JENKINS_HOME directory
 * jenkins['server']['user'] - User the Jenkins server runs as
 * jenkins['server']['group'] - Jenkins user primary group
+* jenkins['server']['uid'] - User ID the Jenkins server runs as
 * jenkins['server']['port'] - TCP listen port for the Jenkins server
 * jenkins['server']['url'] - Base URL of the Jenkins server
 * jenkins['server']['plugins'] - Download the latest version of plugins in this list, bypassing update center
