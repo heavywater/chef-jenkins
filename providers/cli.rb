@@ -22,22 +22,24 @@
 #
 
 def action_run
-  url = @new_resource.url || node[:jenkins][:server][:url]
-  home = @new_resource.home || node[:jenkins][:node][:home]
+  url = @new_resource.url || node['jenkins']['server']['url']
+  home = @new_resource.home || node['jenkins']['node']['home']
 
   #recipes will chown to jenkins later if this doesn't already exist
   directory "home for jenkins-cli.jar" do
     action :create
-    path node[:jenkins][:node][:home]
+    path node['jenkins']['node']['home']
   end
+  new_resource.updated_by_last_action(true)
 
   cli_jar = ::File.join(home, "jenkins-cli.jar")
   remote_file cli_jar do
     source "#{url}/jnlpJars/jenkins-cli.jar"
     not_if { ::File.exists?(cli_jar) }
   end
+  new_resource.updated_by_last_action(true)
 
-  java_home = node[:jenkins][:java_home] || (node.has_key?(:java) ? node[:java][:jdk_dir] : nil)
+  java_home = node['jenkins']['java_home'] || (node.has_key?(:java) ? node['java']['jdk_dir'] : nil)
   if java_home == nil
     java = "java"
   else
@@ -50,4 +52,5 @@ def action_run
     cwd home
     block { |stdout| new_resource.block.call(stdout) } if new_resource.block
   end
+  new_resource.updated_by_last_action(true)
 end

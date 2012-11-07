@@ -22,84 +22,91 @@
 # limitations under the License.
 #
 
-pkey = "#{node[:jenkins][:server][:home]}/.ssh/id_rsa"
+# Install sshkey gem into chef
+chef_gem "sshkey"
+
+pkey = "#{node['jenkins']['server']['home']}/.ssh/id_rsa"
 tmp = "/tmp"
 
-user node[:jenkins][:server][:user] do
-  home node[:jenkins][:server][:home]
+user node['jenkins']['server']['user'] do
+  home node['jenkins']['server']['home']
+  shell "/bin/bash"
+  system true
+  uid node['jenkins']['server']['uid'] if node['jenkins']['server']['uid']
 end
 
-directory node[:jenkins][:server][:home] do
+directory node['jenkins']['server']['home'] do
   recursive true
-  owner node[:jenkins][:server][:user]
-  group node[:jenkins][:server][:group]
+  owner node['jenkins']['server']['user']
+  group node['jenkins']['server']['group']
 end
 
-directory "#{node[:jenkins][:server][:home]}/.ssh" do
+directory "#{node['jenkins']['server']['home']}/.ssh" do
   mode 0700
-  owner node[:jenkins][:server][:user]
-  group node[:jenkins][:server][:group]
+  owner node['jenkins']['server']['user']
+  group node['jenkins']['server']['group']
 end
 
-execute "ssh-keygen -f #{pkey} -N ''" do
-  user  node[:jenkins][:server][:user]
-  group node[:jenkins][:server][:group]
-  not_if { File.exists?(pkey) }
+# Generate and deploy ssh public/private keys
+Gem.clear_paths
+require 'sshkey'
+sshkey = SSHKey.generate(:type => 'RSA', :comment => "#{node['jenkins']['server']['user']}@#{node['fqdn']}")
+
+# Save private key, unless pkey file exists
+template pkey do
+  owner node['jenkins']['server']['user']
+  group node['jenkins']['server']['group']
+  variables( :ssh_private_key => sshkey.private_key )
+  mode 0600
+  action :create_if_missing
+end
+
+# Template public key out to pkey.pub file
+template "#{pkey}.pub" do
+  owner node['jenkins']['server']['user']
+  group node['jenkins']['server']['group']
+  variables( :ssh_public_key => sshkey.ssh_public_key )
+  mode 0644
+  action :create_if_missing
 end
 
 ruby_block "store jenkins ssh pubkey" do
   block do
-    node.set[:jenkins][:server][:pubkey] = File.open("#{pkey}.pub") { |f| f.gets }
+    node.set[:jenkins][:server][:pubkey] = File.read("#{pkey}.pub")
+    node.save unless Chef::Config['solo']
   end
 end
 
-directory "#{node[:jenkins][:server][:home]}/plugins" do
-  owner node[:jenkins][:server][:user]
-  group node[:jenkins][:server][:group]
-  only_if { node[:jenkins][:server][:plugins].size > 0 }
+directory "#{node['jenkins']['server']['home']}/plugins" do
+  owner node['jenkins']['server']['user']
+  group node['jenkins']['server']['group']
+  only_if { node['jenkins']['server']['plugins'].size > 0 }
 end
 
-node[:jenkins][:server][:plugins].each do |name|
-  remote_file "#{node[:jenkins][:server][:home]}/plugins/#{name}.hpi" do
-    source "#{node[:jenkins][:mirror]}/plugins/#{name}/latest/#{name}.hpi"
+node['jenkins']['server']['plugins'].each do |name|
+  remote_file "#{node['jenkins']['server']['home']}/plugins/#{name}.hpi" do
+    source "#{node['jenkins']['mirror']}/plugins/#{name}/latest/#{name}.hpi"
     backup false
-    owner node[:jenkins][:server][:user]
-    group node[:jenkins][:server][:group]
+    owner node['jenkins']['server']['user']
+    group node['jenkins']['server']['group']
     action :create_if_missing
   end
 end
 
-case node.platform
+include_recipe "java"
+
+case node['platform']
 when "ubuntu", "debian"
   include_recipe "apt"
-  include_recipe "java"
-
-  pid_file = "/var/run/jenkins/jenkins.pid"
-  install_starts_service = true
 
   apt_repository "jenkins" do
-    uri "#{node.jenkins.package_url}/debian"
+    uri "#{node['jenkins']['package_url']}/debian"
     components %w[binary/]
     key "http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key"
     action :add
   end
-when "centos", "redhat"
-  include_recipe "yum"
-
-  pid_file = "/var/run/jenkins.pid"
-  install_starts_service = false
-
-  yum_key "jenkins" do
-    url "#{node.jenkins.package_url}/redhat/jenkins-ci.org.key"
-    action :add
-  end
-
-  yum_repository "jenkins" do
-    description "repository for jenkins"
-    url "#{node.jenkins.package_url}/redhat/"
-    key "jenkins"
-    action :add
-  end
+when "centos", "redhat", "centos", "scientific", "amazon"
+  include_recipe "yumrepo::jenkins"
 end
 
 #"jenkins stop" may (likely) exit before the process is actually dead
@@ -108,11 +115,11 @@ ruby_block "netstat" do
   block do
     10.times do
       if IO.popen("netstat -lnt").entries.select { |entry|
-          entry.split[3] =~ /:#{node[:jenkins][:server][:port]}$/
+          entry.split[3] =~ /:#{node['jenkins']['server']['port']}$/
         }.size == 0
         break
       end
-      Chef::Log.debug("service[jenkins] still listening (port #{node[:jenkins][:server][:port]})")
+      Chef::Log.debug("service[jenkins] still listening (port #{node['jenkins']['server']['port']})")
       sleep 1
     end
   end
@@ -121,21 +128,21 @@ end
 
 service "jenkins" do
   supports [ :stop, :start, :restart, :status ]
-  status_command "test -f #{pid_file} && kill -0 `cat #{pid_file}`"
+  status_command "test -f #{node['jenkins']['pid_file']} && kill -0 `cat #{node['jenkins']['pid_file']}`"
   action :nothing
 end
 
 ruby_block "block_until_operational" do
   block do
     until IO.popen("netstat -lnt").entries.select { |entry|
-        entry.split[3] =~ /:#{node[:jenkins][:server][:port]}$/
+        entry.split[3] =~ /:#{node['jenkins']['server']['port']}$/
       }.size == 1
-      Chef::Log.debug "service[jenkins] not listening on port #{node.jenkins.server.port}"
+      Chef::Log.debug "service[jenkins] not listening on port #{node['jenkins']['server']['port']}"
       sleep 1
     end
 
     loop do
-      url = URI.parse("#{node.jenkins.server.url}/job/test/config.xml")
+      url = URI.parse("#{node['jenkins']['server']['url']}/job/test/config.xml")
       res = Chef::REST::RESTRequest.new(:GET, url, nil).call
       break if res.kind_of?(Net::HTTPSuccess) or res.kind_of?(Net::HTTPNotFound)
       Chef::Log.debug "service[jenkins] not responding OK to GET / #{res.inspect}"
@@ -147,19 +154,21 @@ end
 
 log "jenkins: install and start" do
   notifies :install, "package[jenkins]", :immediately
-  notifies :start, "service[jenkins]", :immediately unless install_starts_service
+  notifies :start, "service[jenkins]", :immediately unless node['jenkins']['install_starts_service']
   notifies :create, "ruby_block[block_until_operational]", :immediately
   not_if do
-    File.exists? "/usr/share/jenkins/jenkins.war"
+    File.exists?(node['jenkins']['war_file'])
   end
 end
 
-template "/etc/default/jenkins"
-
-package "jenkins" do
-  action :nothing
-  notifies :create, "template[/etc/default/jenkins]", :immediately
+unless node['jenkins']['sysconf_template'].nil?
+  template node['jenkins']['sysconf_template'] do
+    notifies :restart, "service[jenkins]", :immediately 
+  end
 end
+
+
+package "jenkins"
 
 # restart if this run only added new plugins
 log "plugins updated, restarting jenkins" do
@@ -169,29 +178,26 @@ log "plugins updated, restarting jenkins" do
   notifies :start, "service[jenkins]", :immediately
   notifies :create, "ruby_block[block_until_operational]", :immediately
   only_if do
-    if File.exists?(pid_file)
-      htime = File.mtime(pid_file)
-      Dir["#{node[:jenkins][:server][:home]}/plugins/*.hpi"].select { |file|
+    if File.exists?(node['jenkins']['pid_file'])
+      htime = File.mtime(node['jenkins']['pid_file'])
+      Dir["#{node['jenkins']['server']['home']}/plugins/*.hpi"].select { |file|
         File.mtime(file) > htime
       }.size > 0
     end
   end
-
   action :nothing
 end
 
 # Front Jenkins with an HTTP server
-case node[:jenkins][:http_proxy][:variant]
-when "nginx"
-  include_recipe "jenkins::proxy_nginx"
-when "apache2"
-  include_recipe "jenkins::proxy_apache2"
+case node['jenkins']['http_proxy']['variant']
+when "nginx", "apache2"
+  include_recipe "jenkins::proxy_#{node['jenkins']['http_proxy']['variant']}"
 end
 
-if node.jenkins.iptables_allow == "enable"
+if node['jenkins']['iptables_allow'] == "enable"
   include_recipe "iptables"
   iptables_rule "port_jenkins" do
-    if node[:jenkins][:iptables_allow] == "enable"
+    if node['jenkins']['iptables_allow'] == "enable"
       enable true
     else
       enable false

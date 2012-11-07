@@ -21,15 +21,16 @@
   # Local reverse proxy authorization override
   # Most unix distribution deny proxy by default
   # (ie /etc/apache2/mods-enabled/proxy.conf in Ubuntu)
-  <Proxy http://localhost:<%= node[:jenkins][:server][:port] %>/*>
+  <Proxy http://<%= node['fqdn'] %>:<%= node['jenkins']['server']['port'] %>/*>
     Order deny,allow
     Allow from all
   </Proxy>
 
   ProxyPreserveHost on
-  ProxyPass         /  http://localhost:<%= node[:jenkins][:server][:port] %>/
-  ProxyPassReverse  /  http://localhost:<%= node[:jenkins][:server][:port] %>/
+  ProxyPass         /  http://<%= node['fqdn'] %>:<%= node['jenkins']['server']['port'] %>/
+  ProxyPassReverse  /  http://<%= node['fqdn'] %>:<%= node['jenkins']['server']['port'] %>/
 
+<% if node['jenkins']['http_proxy']['basic_auth'] -%>
   <Location />
     AuthType basic
     AuthName "Jenkins"
@@ -37,4 +38,5 @@
     AuthUserFile <%= File.join(node.apache.dir, "htpasswd") %>
     require valid-user
   </Location>
+<% end -%>
 </VirtualHost>
