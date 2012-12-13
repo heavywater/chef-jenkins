@@ -10,6 +10,9 @@ JAVA=/usr/bin/java
 #JAVA_ARGS="-Xmx256m"
 #JAVA_ARGS="-Djava.net.preferIPv4Stack=true" # make jenkins listen on IPv4 address
 
+# Options to pass to Java when running Jenkins.
+JENKINS_JAVA_OPTIONS="-Djava.awt.headless=true <%= node.jenkins.time_zone %>"
+
 PIDFILE=/var/run/jenkins/jenkins.pid
 
 # user id to be invoked as (otherwise will run as root; not wise!)
