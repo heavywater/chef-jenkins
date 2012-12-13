@@ -158,7 +158,9 @@ template "/etc/default/jenkins"
 
 file "/etc/sysconfig/jenkins" do
   action :delete
+  only_if {File.exists?("/etc/sysconfig/jenkins")}
 end
+
 
 link "/etc/default/jenkins" do
   to "/etc/sysconfig/jenkins"
