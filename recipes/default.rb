@@ -154,11 +154,20 @@ log "jenkins: install and start" do
   end
 end
 
-template "/etc/default/jenkins"
+case node.platform
+when "ubuntu", "debian"
+  jenkins_conffile = "/etc/default/jenkins"
+  template jenkins_conffile
+when "centos", "redhat"
+  jenkins_conffile = "/etc/sysconfig/jenkins"
+  template jenkins_conffile do
+    source "sysconfig_jenkins.erb"
+  end
+end
 
 package "jenkins" do
   action :nothing
-  notifies :create, "template[/etc/default/jenkins]", :immediately
+  notifies :create, "template[#{jenkins_conffile}]", :immediately
 end
 
 # restart if this run only added new plugins
