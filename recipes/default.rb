@@ -161,7 +161,6 @@ file "/etc/sysconfig/jenkins" do
   only_if {File.exists?("/etc/sysconfig/jenkins")}
 end
 
-
 link "/etc/default/jenkins" do
   to "/etc/sysconfig/jenkins"
   link_type :symbolic
