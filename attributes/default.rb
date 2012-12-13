@@ -25,6 +25,10 @@ default[:jenkins][:mirror] = "http://mirrors.jenkins-ci.org"
 default[:jenkins][:package_url] = "http://pkg.jenkins-ci.org"
 default[:jenkins][:java_home] = ENV['JAVA_HOME']
 
+#  Set time zone by default to UTC. Set to your own time zone by using your Java Time Zone Code
+# (ex. "America/Vancouver").
+default[:jenkins][:time_zone] = "-Dorg.apache.commons.jelly.tags.fmt.timeZone=Etc/UTC"
+
 default[:jenkins][:server][:home] = "/var/lib/jenkins"
 default[:jenkins][:server][:user] = "jenkins"
 
