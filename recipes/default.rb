@@ -22,88 +22,19 @@
 # limitations under the License.
 #
 
-pkey = "#{node[:jenkins][:server][:home]}/.ssh/id_rsa"
-tmp = "/tmp"
-
-user node[:jenkins][:server][:user] do
-  home node[:jenkins][:server][:home]
-end
-
-directory node[:jenkins][:server][:home] do
-  recursive true
-  owner node[:jenkins][:server][:user]
-  group node[:jenkins][:server][:group]
-end
-
-directory "#{node[:jenkins][:server][:home]}/.ssh" do
-  mode 0700
-  owner node[:jenkins][:server][:user]
-  group node[:jenkins][:server][:group]
-end
-
-execute "ssh-keygen -f #{pkey} -N ''" do
-  user  node[:jenkins][:server][:user]
-  group node[:jenkins][:server][:group]
-  not_if { File.exists?(pkey) }
-end
-
-ruby_block "store jenkins ssh pubkey" do
-  block do
-    node.set[:jenkins][:server][:pubkey] = File.open("#{pkey}.pub") { |f| f.gets }
-  end
-end
-
-directory "#{node[:jenkins][:server][:home]}/plugins" do
-  owner node[:jenkins][:server][:user]
-  group node[:jenkins][:server][:group]
-  only_if { node[:jenkins][:server][:plugins].size > 0 }
-end
-
-node[:jenkins][:server][:plugins].each do |name|
-  remote_file "#{node[:jenkins][:server][:home]}/plugins/#{name}.hpi" do
-    source "#{node[:jenkins][:mirror]}/plugins/#{name}/latest/#{name}.hpi"
-    backup false
-    owner node[:jenkins][:server][:user]
-    group node[:jenkins][:server][:group]
-    action :create_if_missing
-  end
-end
-
-case node.platform
-when "ubuntu", "debian"
-  include_recipe "apt"
-  include_recipe "java"
-
-  pid_file = "/var/run/jenkins/jenkins.pid"
-  install_starts_service = true
-
-  apt_repository "jenkins" do
-    uri "#{node.jenkins.package_url}/debian"
-    components %w[binary/]
-    key "http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key"
-    action :add
-  end
-when "centos", "redhat"
-  include_recipe "yum"
-
-  pid_file = "/var/run/jenkins.pid"
-  install_starts_service = false
-
-  yum_key "jenkins" do
-    url "#{node.jenkins.package_url}/redhat/jenkins-ci.org.key"
-    action :add
-  end
-
-  yum_repository "jenkins" do
-    description "repository for jenkins"
-    url "#{node.jenkins.package_url}/redhat/"
-    key "jenkins"
-    action :add
-  end
-end
-
 #"jenkins stop" may (likely) exit before the process is actually dead
 #so we sleep until nothing is listening on jenkins.server.port (according to netstat)
+
+include_recipe 'jenkins::commons'
+
+if node.jenkins.java_install or node.platform == "gentoo"
+  include_recipe 'jenkins::war'
+else
+  include_recipe 'jenkins::package'
+end
+
+pid_file = node[:jenkins][:server][:pid_file]
+
 ruby_block "netstat" do
   block do
     10.times do
@@ -145,20 +76,17 @@ ruby_block "block_until_operational" do
   action :nothing
 end
 
-log "jenkins: install and start" do
-  notifies :install, "package[jenkins]", :immediately
-  notifies :start, "service[jenkins]", :immediately unless install_starts_service
+log "jenkins: start" do
+  case node.platform
+  when "ubuntu", "debian"
+    #nothing to start
+  else
+    notifies :start, "service[jenkins]", :immediately
+  end
   notifies :create, "ruby_block[block_until_operational]", :immediately
   not_if do
-    File.exists? "/usr/share/jenkins/jenkins.war"
+    File.exists? "#{node.jenkins.server.java_war_dir}/jenkins.war"
   end
-end
-
-template "/etc/default/jenkins"
-
-package "jenkins" do
-  action :nothing
-  notifies :create, "template[/etc/default/jenkins]", :immediately
 end
 
 # restart if this run only added new plugins
