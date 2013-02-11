@@ -20,6 +20,9 @@
 # limitations under the License.
 #
 
+include_recipe "java"
+
+
 node.set[:jenkins][:server][:pid_file] = "/var/run/jenkins.pid"
 
 directory node[:jenkins][:server][:java_war_dir] do
