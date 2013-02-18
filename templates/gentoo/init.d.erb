@@ -1,0 +1,44 @@
+#!/sbin/runscript
+# Copyright 1999-2012 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: $
+
+depend() {
+ need net
+ use dns logger
+}
+
+start() {
+ JAVA_HOME=`java-config --jre-home`
+ COMMAND=$JAVA_HOME/bin/java
+ JAVA_PARAMS="$JENKINS_JAVA_OPTIONS -DJENKINS_HOME=$JENKINS_HOME -jar $JENKINS_WAR"
+ # Don't use --daemon here, because in this case stop will not work
+ PARAMS="--logfile=<%= node[:jenkins][:server][:log_dir] %>/jenkins.log"
+ [ -n "$JENKINS_PORT" ] && PARAMS="$PARAMS --httpPort=<%= node[:jenkins][:server][:port] %>"
+ [ -n "$JENKINS_DEBUG_LEVEL" ] && PARAMS="$PARAMS --debug=$JENKINS_DEBUG_LEVEL"
+ [ -n "$JENKINS_HANDLER_STARTUP" ] && PARAMS="$PARAMS --handlerCountStartup=$JENKINS_HANDLER_STARTUP"
+ [ -n "$JENKINS_HANDLER_MAX" ] && PARAMS="$PARAMS --handlerCountMax=$JENKINS_HANDLER_MAX"
+ [ -n "$JENKINS_HANDLER_IDLE" ] && PARAMS="$PARAMS --handlerCountMaxIdle=$JENKINS_HANDLER_IDLE"
+ [ -n "$JENKINS_ARGS" ] && PARAMS="$PARAMS $JENKINS_ARGS"
+ if [ "$JENKINS_ENABLE_ACCESS_LOG" = "yes" ]; then
+  PARAMS="$PARAMS --accessLoggerClassName=winstone.accesslog.SimpleAccessLogger --simpleAccessLogger.format=combined --simpleAccessLogger.file=<%= node[:jenkins][:server][:log_dir] %>/access_log"
+ fi
+ ebegin "Starting ${SVCNAME}"
+ echo $JENKINS_PIDFILE
+ echo command: start-stop-daemon --start \
+ --make-pidfile --pidfile $JENKINS_PIDFILE \
+ --user $RUN_AS \
+ --exec "${COMMAND}" -- $JAVA_PARAMS $PARAMS
+ start-stop-daemon --start \
+ --make-pidfile --pidfile $JENKINS_PIDFILE \
+ --background \
+ --user $RUN_AS \
+ --exec "${COMMAND}" -- $JAVA_PARAMS $PARAMS
+ eend $?
+ }
+
+stop() {
+ ebegin "Stopping ${SVCNAME}"
+ start-stop-daemon --stop --quiet --pidfile $JENKINS_PIDFILE
+ eend $?
+}
