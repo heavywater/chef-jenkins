@@ -38,6 +38,7 @@ end
 remote_file "#{node.jenkins.server.java_war_dir}/jenkins.war" do
   source node[:jenkins][:war_url]
   mode 00644
+  not_if "test -f #{node.jenkins.server.java_war_dir}/jenkins.war"
 end
 
 #init method
