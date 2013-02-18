@@ -7,3 +7,4 @@ version          "0.6.3"
 
 %w(java).each { |cb| depends cb }
 %w(iptables yum apt).each { |cb| recommends cb }
+depends "nginx"
