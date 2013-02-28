@@ -1,0 +1,8 @@
+* Jenkins Cookbook Maintenance Transferred
+  - This cookbook is no longer maintained by Heavy Water ops.
+  - Cookbook maintenance has been handed to Opscode, Inc.
+    [[https://github.com/opscode-cookbooks/jenkins][New Repo is here]]
+  - Community Cookbook site 'Maintainer' has been
+    [[http://ckbk.it/jenkins][updated to Opscode]]
+  - View [[https://github.com/heavywater/chef-jenkins/issues/23][this thread]] for more details
+  - Please don't open issues or pull requests here!
